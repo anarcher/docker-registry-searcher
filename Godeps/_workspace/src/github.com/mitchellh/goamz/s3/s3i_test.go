@@ -1,8 +1,3 @@
-//
-// goamz - Go packages to interact with the Amazon Web Services.
-//
-//   https://wiki.ubuntu.com/goamz
-//
 package s3_test
 
 import (
@@ -10,17 +5,16 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
-	"sort"
 	"strings"
+
+	"github.com/mitchellh/goamz/aws"
+	"github.com/mitchellh/goamz/s3"
+	"github.com/mitchellh/goamz/testutil"
+	. "github.com/motain/gocheck"
+	"net"
+	"sort"
 	"time"
-
-	. "gopkg.in/check.v1"
-
-	"gopkg.in/amz.v2/aws"
-	"gopkg.in/amz.v2/s3"
-	"gopkg.in/amz.v2/testutil"
 )
 
 // AmazonServer represents an Amazon S3 server.
@@ -38,6 +32,7 @@ func (s *AmazonServer) SetUp(c *C) {
 
 var _ = Suite(&AmazonClientSuite{Region: aws.USEast})
 var _ = Suite(&AmazonClientSuite{Region: aws.EUWest})
+var _ = Suite(&AmazonClientSuite{Region: aws.EUCentral})
 var _ = Suite(&AmazonDomainClientSuite{Region: aws.USEast})
 
 // AmazonClientSuite tests the client against a live S3 server.
@@ -221,6 +216,31 @@ func (s *ClientTests) TestBasicFunctionality(c *C) {
 	err = b.Del("name")
 	c.Assert(err, IsNil)
 	err = b.Del("name2")
+	c.Assert(err, IsNil)
+
+	err = b.DelBucket()
+	c.Assert(err, IsNil)
+}
+
+func (s *ClientTests) TestCopy(c *C) {
+	b := testBucket(s.s3)
+	err := b.PutBucket(s3.PublicRead)
+
+	err = b.Put("name+1", []byte("yo!"), "text/plain", s3.PublicRead)
+	c.Assert(err, IsNil)
+	defer b.Del("name+1")
+
+	err = b.Copy("name+1", "name+2", s3.PublicRead)
+	c.Assert(err, IsNil)
+	defer b.Del("name+2")
+
+	data, err := b.Get("name+2")
+	c.Assert(err, IsNil)
+	c.Assert(string(data), Equals, "yo!")
+
+	err = b.Del("name+1")
+	c.Assert(err, IsNil)
+	err = b.Del("name+2")
 	c.Assert(err, IsNil)
 
 	err = b.DelBucket()

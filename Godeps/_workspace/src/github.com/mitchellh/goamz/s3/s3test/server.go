@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/xml"
 	"fmt"
+	"github.com/mitchellh/goamz/s3"
 	"io"
 	"io/ioutil"
 	"log"
@@ -18,8 +19,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"gopkg.in/amz.v2/s3"
 )
 
 const debug = false
@@ -227,6 +226,13 @@ var pathRegexp = regexp.MustCompile("/(([^/]+)(/(.*))?)?")
 
 // resourceForURL returns a resource object for the given URL.
 func (srv *Server) resourceForURL(u *url.URL) (r resource) {
+
+	if u.Path == "/" {
+		return serviceResource{
+			buckets: srv.buckets,
+		}
+	}
+
 	m := pathRegexp.FindStringSubmatch(u.Path)
 	if m == nil {
 		fatalf(404, "InvalidURI", "Couldn't parse the specified URI")
@@ -283,6 +289,37 @@ func (nullResource) post(a *action) interface{}   { return notAllowed() }
 func (nullResource) delete(a *action) interface{} { return notAllowed() }
 
 const timeFormat = "2006-01-02T15:04:05.000Z07:00"
+
+type serviceResource struct {
+	buckets map[string]*bucket
+}
+
+func (serviceResource) put(a *action) interface{}    { return notAllowed() }
+func (serviceResource) post(a *action) interface{}   { return notAllowed() }
+func (serviceResource) delete(a *action) interface{} { return notAllowed() }
+
+// GET on an s3 service lists the buckets.
+// http://docs.aws.amazon.com/AmazonS3/latest/API/RESTServiceGET.html
+func (r serviceResource) get(a *action) interface{} {
+	type respBucket struct {
+		Name string
+	}
+
+	type response struct {
+		Buckets []respBucket `xml:">Bucket"`
+	}
+
+	resp := response{}
+
+	for _, bucketPtr := range r.buckets {
+		bkt := respBucket{
+			Name: bucketPtr.name,
+		}
+		resp.Buckets = append(resp.Buckets, bkt)
+	}
+
+	return &resp
+}
 
 type bucketResource struct {
 	name   string

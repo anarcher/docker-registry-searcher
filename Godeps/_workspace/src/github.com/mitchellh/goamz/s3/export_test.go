@@ -1,12 +1,7 @@
-//
-// goamz - Go packages to interact with the Amazon Web Services.
-//
-//   https://wiki.ubuntu.com/goamz
-//
 package s3
 
 import (
-	"gopkg.in/amz.v2/aws"
+	"github.com/mitchellh/goamz/aws"
 )
 
 var originalStrategy = attempts
@@ -17,10 +12,6 @@ func SetAttemptStrategy(s *aws.AttemptStrategy) {
 	} else {
 		attempts = *s
 	}
-}
-
-func AttemptStrategy() aws.AttemptStrategy {
-	return attempts
 }
 
 func Sign(auth aws.Auth, method, path string, params, headers map[string][]string) {

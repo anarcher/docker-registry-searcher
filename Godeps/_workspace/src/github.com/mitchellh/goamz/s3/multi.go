@@ -1,8 +1,3 @@
-//
-// goamz - Go packages to interact with the Amazon Web Services.
-//
-// https://wiki.ubuntu.com/goamz
-//
 package s3
 
 import (
@@ -180,15 +175,14 @@ func (m *Multi) putPart(n int, r io.ReadSeeker, partSize int64, md5b64 string) (
 		if err != nil {
 			return Part{}, err
 		}
-		hresp, err := m.Bucket.S3.run(req)
+		resp, err := m.Bucket.S3.run(req, nil)
 		if shouldRetry(err) && attempt.HasNext() {
 			continue
 		}
 		if err != nil {
 			return Part{}, err
 		}
-		hresp.Body.Close()
-		etag := hresp.Header.Get("ETag")
+		etag := resp.Header.Get("ETag")
 		if etag == "" {
 			return Part{}, errors.New("part upload succeeded with no ETag")
 		}

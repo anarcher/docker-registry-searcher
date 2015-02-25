@@ -1,16 +1,10 @@
-//
-// goamz - Go packages to interact with the Amazon Web Services.
-//
-//   https://wiki.ubuntu.com/goamz
-//
 package s3_test
 
 import (
-	. "gopkg.in/check.v1"
-
-	"gopkg.in/amz.v2/aws"
-	"gopkg.in/amz.v2/s3"
-	"gopkg.in/amz.v2/s3/s3test"
+	"github.com/mitchellh/goamz/aws"
+	"github.com/mitchellh/goamz/s3"
+	"github.com/mitchellh/goamz/s3/s3test"
+	. "github.com/motain/gocheck"
 )
 
 type LocalServer struct {
@@ -30,7 +24,6 @@ func (s *LocalServer) SetUp(c *C) {
 		Name:                 "faux-region-1",
 		S3Endpoint:           srv.URL(),
 		S3LocationConstraint: true, // s3test server requires a LocationConstraint
-		Sign:                 aws.SignV2,
 	}
 }
 

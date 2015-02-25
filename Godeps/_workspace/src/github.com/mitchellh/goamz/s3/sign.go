@@ -1,8 +1,3 @@
-//
-// goamz - Go packages to interact with the Amazon Web Services.
-//
-//   https://wiki.ubuntu.com/goamz
-//
 package s3
 
 import (
@@ -13,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"gopkg.in/amz.v2/aws"
+	"github.com/mitchellh/goamz/aws"
 )
 
 var b64 = base64.StdEncoding
@@ -23,6 +18,7 @@ var b64 = base64.StdEncoding
 
 var s3ParamsToSign = map[string]bool{
 	"acl":                          true,
+	"delete":                       true,
 	"location":                     true,
 	"logging":                      true,
 	"notification":                 true,
@@ -47,6 +43,17 @@ func sign(auth aws.Auth, method, canonicalPath string, params, headers map[strin
 	var md5, ctype, date, xamz string
 	var xamzDate bool
 	var sarray []string
+
+	// add security token
+	if auth.Token != "" {
+		headers["x-amz-security-token"] = []string{auth.Token}
+	}
+
+	if auth.SecretKey == "" {
+		// no auth secret; skip signing, e.g. for public read-only buckets.
+		return
+	}
+
 	for k, v := range headers {
 		k = strings.ToLower(k)
 		switch k {
@@ -111,6 +118,7 @@ func sign(auth aws.Auth, method, canonicalPath string, params, headers map[strin
 	} else {
 		headers["Authorization"] = []string{"AWS " + auth.AccessKey + ":" + string(signature)}
 	}
+
 	if debug {
 		log.Printf("Signature payload: %q", payload)
 		log.Printf("Signature: %q", signature)

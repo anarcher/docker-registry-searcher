@@ -16,17 +16,21 @@
 			"Rev": "bde5c16eb82ff15a1734a3818d9b9547065f65b1"
 		},
 		{
+			"ImportPath": "github.com/mitchellh/goamz/aws",
+			"Rev": "97673455debc43e44e645466f3af7ae7a2497700"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/goamz/s3",
+			"Rev": "97673455debc43e44e645466f3af7ae7a2497700"
+		},
+		{
 			"ImportPath": "github.com/pelletier/go-toml",
 			"Comment": "v0.2.1-14-g36d65b6",
 			"Rev": "36d65b681a9f120e3bf6f8d0586aa5d0e4519b25"
 		},
 		{
-			"ImportPath": "gopkg.in/amz.v2/aws",
-			"Rev": "71b271139d93ec4dd3da5ff15e9b82f4dec513f5"
-		},
-		{
-			"ImportPath": "gopkg.in/amz.v2/s3",
-			"Rev": "71b271139d93ec4dd3da5ff15e9b82f4dec513f5"
+			"ImportPath": "github.com/vaughan0/go-ini",
+			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
 		}
 	]
 }

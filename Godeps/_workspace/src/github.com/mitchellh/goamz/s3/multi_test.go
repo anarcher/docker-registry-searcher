@@ -1,19 +1,12 @@
-//
-// goamz - Go packages to interact with the Amazon Web Services.
-//
-//   https://wiki.ubuntu.com/goamz
-//
 package s3_test
 
 import (
 	"encoding/xml"
+	"github.com/mitchellh/goamz/s3"
+	. "github.com/motain/gocheck"
 	"io"
 	"io/ioutil"
 	"strings"
-
-	. "gopkg.in/check.v1"
-
-	"gopkg.in/amz.v2/s3"
 )
 
 func (s *S) TestInitMulti(c *C) {
@@ -36,7 +29,7 @@ func (s *S) TestInitMulti(c *C) {
 
 func (s *S) TestMultiNoPreviousUpload(c *C) {
 	// Don't retry the NoSuchUpload error.
-	s3.RetryAttempts(false)
+	s.DisableRetries()
 
 	testServer.Response(404, nil, NoSuchUploadErrorDump)
 	testServer.Response(200, nil, InitMultiResultDump)
@@ -154,7 +147,7 @@ func readAll(r io.Reader) string {
 
 func (s *S) TestPutAllNoPreviousUpload(c *C) {
 	// Don't retry the NoSuchUpload error.
-	s3.RetryAttempts(false)
+	s.DisableRetries()
 
 	etag1 := map[string]string{"ETag": `"etag1"`}
 	etag2 := map[string]string{"ETag": `"etag2"`}
@@ -212,7 +205,7 @@ func (s *S) TestPutAllNoPreviousUpload(c *C) {
 
 func (s *S) TestPutAllZeroSizeFile(c *C) {
 	// Don't retry the NoSuchUpload error.
-	s3.RetryAttempts(false)
+	s.DisableRetries()
 
 	etag1 := map[string]string{"ETag": `"etag1"`}
 	testServer.Response(200, nil, InitMultiResultDump)

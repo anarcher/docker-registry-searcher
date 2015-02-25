@@ -1,20 +1,15 @@
-//
-// goamz - Go packages to interact with the Amazon Web Services.
-//
-//   https://wiki.ubuntu.com/goamz
-//
 package s3_test
 
 import (
-	. "gopkg.in/check.v1"
-
-	"gopkg.in/amz.v2/aws"
-	"gopkg.in/amz.v2/s3"
+	"github.com/mitchellh/goamz/aws"
+	"github.com/mitchellh/goamz/s3"
+	. "github.com/motain/gocheck"
 )
 
 // S3 ReST authentication docs: http://goo.gl/G1LrK
 
-var testAuth = aws.Auth{"0PN5J17HBGZHT7JJ3X82", "uV3F3YluFJax1cknvbcGwgjvx4QpvB+leU8dUj2o"}
+var testAuth = aws.Auth{"0PN5J17HBGZHT7JJ3X82", "uV3F3YluFJax1cknvbcGwgjvx4QpvB+leU8dUj2o", ""}
+var emptyAuth = aws.Auth{"", "", ""}
 
 func (s *S) TestSignExampleObjectGet(c *C) {
 	method := "GET"
@@ -26,6 +21,17 @@ func (s *S) TestSignExampleObjectGet(c *C) {
 	s3.Sign(testAuth, method, path, nil, headers)
 	expected := "AWS 0PN5J17HBGZHT7JJ3X82:xXjDGYUmKxnwqr5KXNPGldn5LbA="
 	c.Assert(headers["Authorization"], DeepEquals, []string{expected})
+}
+
+func (s *S) TestSignExampleObjectGetNoAuth(c *C) {
+	method := "GET"
+	path := "/johnsmith/photos/puppy.jpg"
+	headers := map[string][]string{
+		"Host": {"johnsmith.s3.amazonaws.com"},
+		"Date": {"Tue, 27 Mar 2007 19:36:42 +0000"},
+	}
+	s3.Sign(emptyAuth, method, path, nil, headers)
+	c.Assert(headers["Authorization"], IsNil)
 }
 
 func (s *S) TestSignExampleObjectPut(c *C) {
@@ -60,6 +66,23 @@ func (s *S) TestSignExampleList(c *C) {
 	c.Assert(headers["Authorization"], DeepEquals, []string{expected})
 }
 
+func (s *S) TestSignExampleListNoAuth(c *C) {
+	method := "GET"
+	path := "/johnsmith/"
+	params := map[string][]string{
+		"prefix":   {"photos"},
+		"max-keys": {"50"},
+		"marker":   {"puppy"},
+	}
+	headers := map[string][]string{
+		"Host":       {"johnsmith.s3.amazonaws.com"},
+		"Date":       {"Tue, 27 Mar 2007 19:42:41 +0000"},
+		"User-Agent": {"Mozilla/5.0"},
+	}
+	s3.Sign(emptyAuth, method, path, params, headers)
+	c.Assert(headers["Authorization"], IsNil)
+}
+
 func (s *S) TestSignExampleFetch(c *C) {
 	method := "GET"
 	path := "/johnsmith/"
@@ -73,6 +96,20 @@ func (s *S) TestSignExampleFetch(c *C) {
 	s3.Sign(testAuth, method, path, params, headers)
 	expected := "AWS 0PN5J17HBGZHT7JJ3X82:thdUi9VAkzhkniLj96JIrOPGi0g="
 	c.Assert(headers["Authorization"], DeepEquals, []string{expected})
+}
+
+func (s *S) TestSignExampleFetchNoAuth(c *C) {
+	method := "GET"
+	path := "/johnsmith/"
+	params := map[string][]string{
+		"acl": {""},
+	}
+	headers := map[string][]string{
+		"Host": {"johnsmith.s3.amazonaws.com"},
+		"Date": {"Tue, 27 Mar 2007 19:44:46 +0000"},
+	}
+	s3.Sign(emptyAuth, method, path, params, headers)
+	c.Assert(headers["Authorization"], IsNil)
 }
 
 func (s *S) TestSignExampleDelete(c *C) {
@@ -135,4 +172,23 @@ func (s *S) TestSignExampleUnicodeKeys(c *C) {
 	s3.Sign(testAuth, method, path, nil, headers)
 	expected := "AWS 0PN5J17HBGZHT7JJ3X82:dxhSBHoI6eVSPcXJqEghlUzZMnY="
 	c.Assert(headers["Authorization"], DeepEquals, []string{expected})
+}
+
+// Not included in AWS documentation
+
+func (s *S) TestSignWithIAMToken(c *C) {
+	method := "GET"
+	path := "/"
+	headers := map[string][]string{
+		"Host": {"s3.amazonaws.com"},
+		"Date": {"Wed, 28 Mar 2007 01:29:59 +0000"},
+	}
+
+	authWithToken := testAuth
+	authWithToken.Token = "totallysecret"
+
+	s3.Sign(authWithToken, method, path, nil, headers)
+	expected := "AWS 0PN5J17HBGZHT7JJ3X82:SJ0yQO7NpHyXJ7zkxY+/fGQ6aUw="
+	c.Assert(headers["Authorization"], DeepEquals, []string{expected})
+	c.Assert(headers["x-amz-security-token"], DeepEquals, []string{authWithToken.Token})
 }
