@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/drone/config"
 	"github.com/gin-gonic/gin"
 	"github.com/mitchellh/goamz/aws"
@@ -20,12 +19,8 @@ var (
 	aws_access_key_id     = config.String("aws_access_key_id", "")
 	aws_secret_access_key = config.String("aws_secret_access_key", "")
 	aws_bucket            = config.String("aws_bucket", "")
-	search_result_max     = config.Int("search_result_max", 100)
-)
-
-const (
-	PATH_REGISTRY_REPOSITORIES_LIBRARY = "/registry/repositories/library"
-	DELIMITER                          = "/"
+	search_result_max     = config.Int("search_result_max", 1000)
+	search_result_limit   = config.Int("search_result_limit", 2000)
 )
 
 func main() {
@@ -47,13 +42,32 @@ func main() {
 
 	r.GET("/v1/search", func(c *gin.Context) {
 		q := c.Params.ByName("q")
-		list, err := bucket.List(PATH_REGISTRY_REPOSITORIES_LIBRARY, DELIMITER, q, *search_result_max)
+		//n := int(c.Params.ByName("n"))
+		//page := int(c.Params.ByName("page"))
+
+		repos, err := LoadS3Repositories(bucket, *search_result_max, *search_result_limit)
 		if err != nil {
 			c.Fail(500, err)
-			return
 		}
-		fmt.Println(list)
-		c.String(200, "Hello world: "+q)
+
+		var repoNames []string
+		repoNames, err = repos.Search(q)
+		if err != nil {
+			c.Fail(500, err)
+		}
+
+		repoInfos := repos.InfosByNames(repoNames)
+		total := len(repoInfos)
+
+		//I didn't use paging.
+		c.JSON(200, gin.H{
+			"num_pages":   1,
+			"num_results": total,
+			"results":     repoInfos,
+			"page_size":   total,
+			"query":       q,
+			"page":        1,
+		})
 		return
 	})
 

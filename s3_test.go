@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestS3Client(t *testing.T) {
+func _TestS3Client(t *testing.T) {
 	auth, err := aws.EnvAuth()
 	if err != nil {
 		t.Error(err)
@@ -40,6 +40,7 @@ func TestS3Client(t *testing.T) {
 	t.Log("IsTruncated:", list.IsTruncated)
 	t.Log("MaxKeys:", list.MaxKeys)
 	t.Log("NextMarker:", list.NextMarker)
+	t.Log("MaxKeys:", list.MaxKeys)
 
 	t.Log("CommonPrefixes:", len(list.CommonPrefixes))
 	for _, prefix := range list.CommonPrefixes {
