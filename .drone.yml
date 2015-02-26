@@ -6,6 +6,8 @@ env:
     - GOPATH=$PWD/Godeps/_workspace:$GOPATH
     - PATH=$PATH:$GOROOT/bin:$GOPATH/bin
     - PATH=$PWD/Godeps/_workspace/bin:$PATH
+    - VERSION=0.1.0
 script:
     - go test 
     - go build
+    - docker build -t docker-registry-searcher:$(VERSION) . 
