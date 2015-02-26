@@ -9,8 +9,9 @@ sudo: false
 install:
     - export GOPATH=${TRAVIS_BUILD_DIR}/Godeps/_workspace:$GOPATH
     - export PATH=${TRAVIS_BUILD_DIR}/Godeps/_workspace/bin:$PATH
-    - go get code.google.com/p/go.tools/cmd/vet
+    - go get golang.org/x/tools/cmd/vet 
 
 script:
     - go vet ./...
     - go test -v -race ./...
+    - go build
