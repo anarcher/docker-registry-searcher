@@ -1,0 +1,11 @@
+image: go1.4
+git:
+    path: github.com/anarcher/docker-registry-searcher
+env:
+    - GOROOT=/usr/local/go
+    - GOPATH=$PWD/Godeps/_workspace:$GOPATH
+    - PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+    - PATH=$PWD/Godeps/_workspace/bin:$PATH
+script:
+    - go test 
+    - go build
