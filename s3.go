@@ -2,11 +2,12 @@ package main
 
 import (
 	"github.com/mitchellh/goamz/s3"
+	"log"
 	"strings"
 )
 
 const (
-	PATH_REGISTRY_REPOSITORIES_LIBRARY = "/registry/repositories/library"
+	PATH_REGISTRY_REPOSITORIES_LIBRARY = "registry/repositories/library/"
 	DELIMITER                          = "/"
 )
 
@@ -33,6 +34,14 @@ func (r *S3Repositories) Read(max, limit int) error {
 
 	for {
 		list, err := r.bucket.List(PATH_REGISTRY_REPOSITORIES_LIBRARY, DELIMITER, marker, max)
+
+		if *debug_mode {
+			log.Printf("bucket.List: %v", len(list.CommonPrefixes))
+			for i, cp := range list.CommonPrefixes {
+				log.Printf("%v:%v", i, cp)
+			}
+		}
+
 		if err != nil {
 			return err
 		}
@@ -67,6 +76,8 @@ func (r *S3Repositories) Search(q string) (result []string, err error) {
 
 func (r S3Repositories) InfosByNames(names []string) (infos []map[string]string) {
 	for _, name := range names {
+		name = strings.Replace(name, PATH_REGISTRY_REPOSITORIES_LIBRARY, "", 1)
+		name = name[0 : len(name)-1]
 		infos = append(infos, map[string]string{"name": name, "description": ""})
 	}
 

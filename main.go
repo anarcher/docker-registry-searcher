@@ -7,6 +7,7 @@ import (
 	"github.com/mitchellh/goamz/aws"
 	"github.com/mitchellh/goamz/s3"
 	"log"
+	"os"
 )
 
 var (
@@ -14,26 +15,42 @@ var (
 )
 
 var (
-	gin_mode              = config.String("gin_mode", gin.DebugMode)
-	addr                  = config.String("addr", ":8080")
-	aws_access_key_id     = config.String("aws_access_key_id", "")
-	aws_secret_access_key = config.String("aws_secret_access_key", "")
-	aws_bucket            = config.String("aws_bucket", "")
-	search_result_max     = config.Int("search_result_max", 1000)
-	search_result_limit   = config.Int("search_result_limit", 2000)
+	debug_mode            = config.Bool("debug", false)
+	gin_mode              = config.String("gin-mode", gin.DebugMode)
+	ip                    = config.String("ip", "0.0.0.0")
+	port                  = config.String("port", "8080")
+	aws_access_key_id     = config.String("aws-access-key", "")
+	aws_secret_access_key = config.String("aws-secret-key", "")
+	aws_region            = config.String("aws-region", "")
+	s3_bucket             = config.String("s3-bucket", "")
+	search_result_max     = config.Int("search-result-max", 1000)
+	search_result_limit   = config.Int("search-result-limit", 2000)
 )
 
 func main() {
+	config.SetPrefix("DS_")
+	if _, err := os.Stat(*configFile); err != nil {
+		log.Println(err)
+		config.Parse("")
+	} else {
+		config.Parse(*configFile)
+	}
 
-	config.Parse(*configFile)
+	printConfigs()
 
 	awsAuth, err := aws.GetAuth(*aws_access_key_id, *aws_secret_access_key)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	s3Client := s3.New(awsAuth, aws.USEast)
-	bucket := s3Client.Bucket(*aws_bucket)
+
+	region, ok := aws.Regions[*aws_region]
+	if !ok {
+		log.Fatalf("aws_region is wrong:%v", *aws_region)
+		return
+	}
+	s3Client := s3.New(awsAuth, region)
+	bucket := s3Client.Bucket(*s3_bucket)
 
 	r := gin.New()
 	r.Use(gin.Logger())
@@ -41,19 +58,26 @@ func main() {
 	r.Use(gin.ErrorLogger())
 
 	r.GET("/v1/search", func(c *gin.Context) {
-		q := c.Params.ByName("q")
-		//n := int(c.Params.ByName("n"))
-		//page := int(c.Params.ByName("page"))
+		log.Printf("DEBUG_MODE: %v", *debug_mode)
+		q := c.Request.URL.Query().Get("q")
+		//n := c.Request.URL.Query().Get("n")
+		//page := c.Request.URL.Query().Get("page")
 
 		repos, err := LoadS3Repositories(bucket, *search_result_max, *search_result_limit)
 		if err != nil {
 			c.Fail(500, err)
+			return
 		}
 
 		var repoNames []string
 		repoNames, err = repos.Search(q)
 		if err != nil {
 			c.Fail(500, err)
+			return
+		}
+
+		if *debug_mode == true {
+			log.Printf("%v", repoNames)
 		}
 
 		repoInfos := repos.InfosByNames(repoNames)
@@ -71,5 +95,22 @@ func main() {
 		return
 	})
 
-	r.Run(*addr)
+	addr := *ip + ":" + *port
+	r.Run(addr)
+}
+
+func printConfigs() {
+	if *debug_mode == false {
+		return
+	}
+	log.Printf("DEBUG: %v\n", *debug_mode)
+	log.Printf("GIN_MODE: %v\n", *gin_mode)
+	log.Printf("ADDR: %v:%v\n", *ip, *port)
+	log.Printf("AWS_ACCESSKEY: %v\n", *aws_access_key_id)
+	log.Printf("AWS_SECRETKEY: %v\n", *aws_secret_access_key)
+	log.Printf("AWS_REGION: %v\n", *aws_region)
+	log.Printf("S3_BUCKEY: %v\n", *s3_bucket)
+	log.Printf("SEARCH_RESULT_MAX: %v\n", *search_result_max)
+	log.Printf("SEARCH_RESULT_LIMIT: %v\n", *search_result_limit)
+
 }
