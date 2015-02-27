@@ -28,6 +28,7 @@ var (
 )
 
 func main() {
+	flag.Parse()
 	config.SetPrefix("DS_")
 	if _, err := os.Stat(*configFile); err != nil {
 		log.Println(err)

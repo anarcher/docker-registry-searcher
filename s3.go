@@ -34,16 +34,15 @@ func (r *S3Repositories) Read(max, limit int) error {
 
 	for {
 		list, err := r.bucket.List(PATH_REGISTRY_REPOSITORIES_LIBRARY, DELIMITER, marker, max)
+		if err != nil {
+			return err
+		}
 
 		if *debug_mode {
 			log.Printf("bucket.List: %v", len(list.CommonPrefixes))
 			for i, cp := range list.CommonPrefixes {
 				log.Printf("%v:%v", i, cp)
 			}
-		}
-
-		if err != nil {
-			return err
 		}
 
 		for _, dir := range list.CommonPrefixes {
