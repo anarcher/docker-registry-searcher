@@ -17,7 +17,7 @@ var (
 var (
 	debug_mode            = config.Bool("debug", false)
 	gin_mode              = config.String("gin-mode", gin.DebugMode)
-	ip                    = config.String("ip", "0.0.0.0")
+	ip                    = config.String("ip", "")
 	port                  = config.String("port", "8080")
 	aws_access_key_id     = config.String("aws-access-key", "")
 	aws_secret_access_key = config.String("aws-secret-key", "")
